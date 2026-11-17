@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Call panel</title>
+<style>
+:root{
+  --bg:#f5f6f8; --card:#ffffff; --ink:#1b2430; --muted:#5d6877; --line:#dfe3ea; --accent:#1f6feb; --accent-ink:#ffffff;
+  --good:#1a8f4c; --good-bg:#e3f5ea; --fair:#b77a00; --fair-bg:#fff3d6; --poor:#c92a2a; --poor-bg:#fde6e6;
+  --dodged:#7a3fc2; --dodged-bg:#f0e7fb; --unclear:#1b7fa8; --unclear-bg:#e1f2f9; --covered:#6b7480; --covered-bg:#eceef2;
+  --shadow:0 1px 2px rgba(20,30,50,.06),0 4px 14px rgba(20,30,50,.06);
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#12161c; --card:#1b212a; --ink:#e8ecf2; --muted:#9aa5b4; --line:#2b3340; --accent:#4c8dff; --accent-ink:#0b1220;
+  --good:#4cc47f; --good-bg:#16301f; --fair:#e3b341; --fair-bg:#3a2f12; --poor:#ff6b6b; --poor-bg:#3b1818;
+  --dodged:#b18af0; --dodged-bg:#2a1f3d; --unclear:#5cc0e8; --unclear-bg:#15303c; --covered:#9aa5b4; --covered-bg:#252c37;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 4px 14px rgba(0,0,0,.35);}
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button{font:inherit;color:inherit;cursor:pointer}
+header.top{position:sticky;top:0;z-index:20;background:var(--card);border-bottom:1px solid var(--line);box-shadow:var(--shadow)}
+.top-row{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;padding:10px 16px}
+.brand{font-weight:700;letter-spacing:.2px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{border:0;background:transparent;padding:7px 14px;font-weight:600}
+.seg button.on{background:var(--accent);color:var(--accent-ink)}
+.field{display:flex;align-items:center;gap:6px}
+.field input[type=text]{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;padding:7px 10px;min-width:210px}
+.pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:6px 12px;background:var(--bg);font-size:14px}
+.pill.rec{border-color:var(--poor);color:var(--poor);font-weight:600}
+.pill.ok{border-color:var(--good);color:var(--good);font-weight:600}
+.spacer{flex:1}
+.btn{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:7px 12px}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+.btn.small{padding:4px 9px;font-size:13px}
+.btn:hover{filter:brightness(.97)}
+/* flow */
+.flow{display:flex;align-items:stretch;gap:0;overflow-x:auto;padding:8px 16px 12px}
+.node{flex:0 0 auto;min-width:92px;border:2px solid var(--line);border-radius:12px;background:var(--bg);padding:6px 10px;text-align:left;position:relative}
+.node .l{font-weight:700;font-size:15px}
+.node .n{font-size:12px;color:var(--muted);white-space:nowrap}
+.node .c{font-size:12px;font-weight:600}
+.node.sel{outline:3px solid var(--accent);outline-offset:1px}
+.node.s-good{border-color:var(--good);background:var(--good-bg)}
+.node.s-fair{border-color:var(--fair);background:var(--fair-bg)}
+.node.s-poor{border-color:var(--poor);background:var(--poor-bg)}
+.node.done{border-style:solid}
+.arrow{flex:0 0 auto;align-self:center;width:18px;height:2px;background:var(--line);position:relative;margin:0 2px}
+.arrow:after{content:"";position:absolute;right:-1px;top:-4px;border-left:7px solid var(--line);border-top:5px solid transparent;border-bottom:5px solid transparent}
+/* next up */
+.next{margin:0 16px 12px;border-radius:12px;padding:12px 14px;background:var(--accent);color:var(--accent-ink);display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.next.warn{background:#c2410c;color:#fff}
+.next.alert{background:var(--poor);color:#fff}
+.next .tag{font-size:12px;text-transform:uppercase;letter-spacing:.8px;opacity:.85}
+.next .txt{flex:1;min-width:240px}
+.next .txt b{font-size:17px}
+.next .go{background:#fff;color:#111;border:0;border-radius:8px;padding:8px 14px;font-weight:700}
+/* layout */
+main.wrap{display:grid;grid-template-columns:1fr;gap:16px;padding:0 16px 40px;max-width:1400px;margin:0 auto}
+@media(min-width:1020px){main.wrap{grid-template-columns:1fr 340px}}
+.cards{display:flex;flex-direction:column;gap:10px}
+.blockhead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin:4px 0 2px}
+.blockhead h2{margin:0;font-size:20px}
+.blockhead .sub{color:var(--muted);font-size:14px}
+.qcard{background:var(--card);border:1px solid var(--line);border-left:6px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
+.qcard.r-good{border-left-color:var(--good)} .qcard.r-fair{border-left-color:var(--fair)} .qcard.r-poor{border-left-color:var(--poor)}
+.qcard.r-dodged{border-left-color:var(--dodged)} .qcard.r-unclear{border-left-color:var(--unclear)} .qcard.r-covered,.qcard.r-skip{border-left-color:var(--covered);opacity:.78}
+.qcard.pulse{animation:pulse 1.2s ease 1}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(31,111,235,.6)}100%{box-shadow:0 0 0 14px rgba(31,111,235,0)}}
+.qhead{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;width:100%;background:none;border:0;text-align:left}
+.qid{flex:0 0 auto;font-weight:700;font-size:13px;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:2px 7px;margin-top:2px}
+.qtext{flex:1;font-size:17px}
+.chip{flex:0 0 auto;font-size:12px;font-weight:700;border-radius:999px;padding:3px 10px;margin-top:2px}
+.chip.good{background:var(--good-bg);color:var(--good)} .chip.fair{background:var(--fair-bg);color:var(--fair)} .chip.poor{background:var(--poor-bg);color:var(--poor)}
+.chip.dodged{background:var(--dodged-bg);color:var(--dodged)} .chip.unclear{background:var(--unclear-bg);color:var(--unclear)} .chip.covered,.chip.skip{background:var(--covered-bg);color:var(--covered)}
+.qbody{padding:0 14px 14px 14px;display:flex;flex-direction:column;gap:10px}
+.hint{display:grid;grid-template-columns:1fr;gap:8px}
+@media(min-width:700px){.hint{grid-template-columns:1fr 1fr}}
+.box{border-radius:8px;padding:8px 10px;font-size:14px}
+.box b{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.7px;margin-bottom:2px}
+.box.want{background:var(--good-bg)} .box.want b{color:var(--good)}
+.box.red{background:var(--poor-bg)} .box.red b{color:var(--poor)}
+.box.press{background:var(--fair-bg);border:1px solid var(--fair);font-size:16px}
+.box.press b{color:var(--fair)}
+.box.rephrase{background:var(--unclear-bg);border:1px solid var(--unclear);font-size:16px}
+.box.rephrase b{color:var(--unclear)}
+.rates{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+@media(min-width:700px){.rates{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:1200px){.rates{grid-template-columns:repeat(6,1fr)}}
+.rate{border:2px solid var(--line);background:var(--bg);border-radius:10px;padding:9px 6px;text-align:center;font-weight:700;line-height:1.2}
+.rate small{display:block;font-weight:400;font-size:11.5px;color:var(--muted);margin-top:2px}
+.rate.good{border-color:var(--good);color:var(--good)} .rate.fair{border-color:var(--fair);color:var(--fair)} .rate.poor{border-color:var(--poor);color:var(--poor)}
+.rate.dodged{border-color:var(--dodged);color:var(--dodged)} .rate.unclear{border-color:var(--unclear);color:var(--unclear)} .rate.covered{border-color:var(--covered);color:var(--covered)}
+.rate.on.good{background:var(--good);color:#fff} .rate.on.fair{background:var(--fair);color:#fff} .rate.on.poor{background:var(--poor);color:#fff}
+.rate.on.dodged{background:var(--dodged);color:#fff} .rate.on.unclear{background:var(--unclear);color:#fff} .rate.on.covered{background:var(--covered);color:#fff}
+.rate.on small{color:rgba(255,255,255,.9)}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+.tools .btn.on{background:var(--poor-bg);border-color:var(--poor);color:var(--poor);font-weight:600}
+.tools .btn.ev1{background:var(--fair-bg);border-color:var(--fair);color:var(--fair);font-weight:600}
+.tools .btn.ev2{background:var(--good-bg);border-color:var(--good);color:var(--good);font-weight:600}
+textarea{width:100%;min-height:58px;resize:vertical;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;padding:8px 10px;font:inherit;font-size:15px}
+.script{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;box-shadow:var(--shadow)}
+.script blockquote{margin:8px 0;padding:10px 14px;border-left:4px solid var(--accent);background:var(--bg);border-radius:6px;font-size:17px}
+.script label.chk{display:flex;gap:10px;align-items:center;margin:8px 0;font-weight:600}
+.script input[type=checkbox]{width:20px;height:20px}
+.donts{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.donts span{background:var(--poor-bg);color:var(--poor);border-radius:999px;padding:3px 10px;font-size:13px;font-weight:600}
+/* summary */
+aside.sum{background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:14px;align-self:start;position:sticky;top:176px;max-height:calc(100vh - 190px);overflow:auto}
+@media(max-width:1019px){aside.sum{position:static;max-height:none}}
+aside.sum h3{margin:0 0 6px;font-size:15px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted)}
+.verdict{border-radius:10px;padding:10px 12px;margin-bottom:12px;font-weight:600}
+.verdict.v-good{background:var(--good-bg);color:var(--good)} .verdict.v-fair{background:var(--fair-bg);color:var(--fair)} .verdict.v-poor{background:var(--poor-bg);color:var(--poor)} .verdict.v-na{background:var(--covered-bg);color:var(--muted)}
+.score{font-size:34px;font-weight:800}
+.score small{font-size:14px;font-weight:500;color:var(--muted)}
+.counts{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 12px}
+.sum ul{margin:4px 0 12px;padding-left:18px;font-size:14px}
+.sum li{margin:2px 0}
+.sum .empty{color:var(--muted);font-size:14px;margin:2px 0 12px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
+.modal.on{display:flex}
+.modal .in{background:var(--card);border-radius:14px;max-width:640px;width:100%;max-height:85vh;overflow:auto;padding:16px}
+.modal h3{margin:0 0 4px}
+.cov-group{margin:10px 0 2px;font-weight:700;color:var(--muted);font-size:13px;text-transform:uppercase;letter-spacing:.6px}
+.cov-item{display:flex;gap:10px;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--line);font-size:15px}
+.cov-item input{margin-top:4px;width:18px;height:18px}
+.legend{font-size:13px;color:var(--muted);margin:0 16px 8px}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-row">
+    <span class="brand">Agency call panel</span>
+    <div class="seg" id="bizSeg">
+      <button data-biz="mv">Mooveto</button>
+      <button data-biz="kc">Keen Clean</button>
+    </div>
+    <div class="field">
+      <input type="text" id="agency" list="agencyList" placeholder="Agency name" autocomplete="off">
+      <datalist id="agencyList"></datalist>
+    </div>
+    <span class="pill" id="consentPill"></span>
+    <span class="pill" id="livePill"></span>
+    <span class="pill" id="timerPill"><span id="timerTxt">00:00</span> <button class="btn small" id="timerBtn">Start</button></span>
+    <span class="spacer"></span>
+    <button class="btn" id="copyBtn">Copy summary</button>
+    <button class="btn" id="modeBtn"></button>
+    <button class="btn" id="resetBtn">Reset this call</button>
+  </div>
+  <div class="flow" id="flow"></div>
+</header>
+
+<div style="height:12px"></div>
+<div class="next" id="next"></div>
+<div class="legend"><b>How to use:</b> tap a card → rate the answer → follow the “Next up” bar. Use “Covered earlier” when they have already answered a question, so you don’t ask it twice. <b>Live:</b> everyone with the link sees the same ratings in real time. The person leading the call uses “You are leading”; everyone else taps it to “Following the lead” so their screen follows the question being asked.</div>
+
+<main class="wrap">
+  <section class="cards" id="main"></section>
+  <aside class="sum" id="sum"></aside>
+</main>
+
+<div class="modal" id="keyModal"><div class="in" style="max-width:420px">
+  <h3>Access key</h3>
+  <p style="color:var(--muted)">Enter the access key you were given to open the panel.</p>
+  <input type="text" id="keyInput" autocomplete="off" placeholder="Access key" style="width:100%;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;padding:10px">
+  <p id="keyErr" style="color:var(--poor);min-height:1.2em;margin:8px 0"></p>
+  <div style="display:flex;justify-content:flex-end"><button class="btn primary" id="keyBtn">Open panel</button></div>
+</div></div>
+<div class="modal" id="covModal"><div class="in" id="covIn"></div></div>
+
+<script>
+let B=[],Q=[],TRIG={},RATE={},SCORED=[],GENERIC_SIMPLE='',DONTS=[];
+/* ---------- STATE (shared live through the artifact database) ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let biz='mv', agency='', callId=null, openId=null, running=false, tick=null;
+let S={consent:false,startDone:false,endDone:false,items:{},last:null,block:'START',secs:0};
+let db=null, mode='lead', live='connecting', metaExists=false, firstMeta=true, resetArm=false, lastMetaJson='';
+let unsubMeta=null, unsubItems=null, callsList=[], localCalls={};
+const chains={}, noteTimers={};
+const R=v=>(v&&typeof v==='object')?v[biz]:v;
+const qs=()=>Q.filter(x=>!x.only||x.only===biz);
+const bls=()=>B.filter(x=>!x.only||x.only===biz);
+const byId=id=>Q.find(x=>x.id===id);
+const slug=s=>(String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')||'unnamed').slice(0,60);
+const makeId=(b,a)=>b+'-'+slug(a);
+function blank(){return{consent:false,startDone:false,endDone:false,items:{},last:null,block:'START',secs:0}}
+const it=id=>S.items[id]||{r:null,note:'',ev:0,flag:false,fu:false};
+function stat(bid){const l=qs().filter(x=>x.b===bid);let rated=0,sum=0,n=0;l.forEach(x=>{const s=it(x.id);if(s.r){rated++;const sc=RATE[s.r].s;if(sc!==null){sum+=sc;n++}}});return{total:l.length,rated,n,avg:n?sum/n:null}}
+function overall(){let sum=0,n=0,flags=0,covered=0;qs().forEach(x=>{const s=it(x.id);if(s.r&&RATE[s.r].s!==null){sum+=RATE[s.r].s;n++}if(s.flag)flags++;if(s.r==='covered')covered++});return{n,avg:n?sum/n:null,flags,covered}}
+const band=a=>a===null?'':a>=2.2?'good':a>=1.5?'fair':'poor';
+const fmt=a=>a===null?'–':a.toFixed(1);
+const clock=s=>String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+
+/* ---------- SYNC LAYER ---------- */
+const P=()=>'calls/'+callId;
+function chain(k,fn){const p=(chains[k]||Promise.resolve()).then(fn);chains[k]=p.catch(()=>{});return p}
+function writeErr(e){live=(e&&(e.code==='invalid_argument'||e.code==='revoked'))?'readonly':'error';renderHeader()}
+function subErr(e){live=(e&&e.code==='revoked')?'readonly':'error';renderHeader()}
+function scheduleWrite(id,delay){clearTimeout(noteTimers[id]);noteTimers[id]=setTimeout(()=>{delete noteTimers[id];writeItem(id)},delay||0)}
+function writeItem(id){
+  if(!db||!callId)return;const path=P()+'/items/'+id;
+  return chain(path,()=>{const d=it(id);return db.doc(path).set({r:d.r||null,note:d.note||'',ev:d.ev||0,flag:!!d.flag,fu:!!d.fu})}).catch(writeErr);
+}
+function set(id,patch,delay){S.items[id]=Object.assign({},it(id),patch);scheduleWrite(id,delay)}
+function metaFull(){return{biz,agency,consent:S.consent,startDone:S.startDone,endDone:S.endDone,last:S.last||null,block:S.block,open:openId||null}}
+/* patch keys: consent, startDone, endDone, last, block, open. Position (block/open) is only shared by the leader. */
+function setMeta(patch){
+  const out={};
+  Object.keys(patch).forEach(k=>{
+    if(k==='open')openId=patch[k];else S[k]=patch[k];
+    if((k==='block'||k==='open')&&mode!=='lead')return;
+    out[k]=patch[k]===undefined?null:patch[k];
+  });
+  if(!db||!callId||!Object.keys(out).length)return;
+  const path=P();
+  chain(path,()=>metaExists?db.doc(path).update(out).catch(()=>db.doc(path).set(metaFull())):db.doc(path).set(metaFull())).catch(writeErr);
+}
+function rerender(){const a=document.activeElement;if(a&&a.tagName==='TEXTAREA')refreshSide();else renderAll()}
+function onMeta(snap){
+  metaExists=snap.exists;
+  if(!snap.metadata.fromCache&&live!=='readonly'&&live!=='error')live='ok';
+  if(snap.exists){
+    const m=snap.data(),j=JSON.stringify([m.consent,m.startDone,m.endDone,m.last,m.block,m.open]);
+    if(j!==lastMetaJson||firstMeta){
+      lastMetaJson=j;S.consent=!!m.consent;S.startDone=!!m.startDone;S.endDone=!!m.endDone;S.last=m.last||null;
+      if(mode==='follow'||firstMeta){S.block=m.block||'START';openId=m.open||null}
+      firstMeta=false;rerender();return;
+    }
+  }
+  firstMeta=false;renderHeader();
+}
+function onItems(snap){
+  let changed=false;const seen={};
+  snap.docs.forEach(d=>{
+    const v=d.data()||{};seen[d.id]=1;
+    const nv={r:v.r||null,note:v.note||'',ev:v.ev||0,flag:!!v.flag,fu:!!v.fu},cur=S.items[d.id];
+    if(JSON.stringify(cur)!==JSON.stringify(nv)){
+      const a=document.activeElement;
+      if(cur&&a&&a.dataset&&a.dataset.note===d.id)nv.note=cur.note;
+      S.items[d.id]=nv;changed=true;
+    }
+  });
+  Object.keys(S.items).forEach(id=>{if(!seen[id]&&!noteTimers[id]){delete S.items[id];changed=true}});
+  if(!snap.metadata.fromCache&&live!=='readonly'&&live!=='error')live='ok';
+  if(changed)rerender();else renderHeader();
+}
+function switchCall(id,b,a){
+  if(unsubMeta){unsubMeta();unsubMeta=null}
+  if(unsubItems){unsubItems();unsubItems=null}
+  if(!db&&callId)localCalls[callId]=S;
+  const secs=S.secs;biz=b;agency=a;callId=id;
+  S=(!db&&localCalls[id])||blank();S.secs=secs;
+  openId=null;metaExists=false;firstMeta=true;lastMetaJson='';
+  renderAll();
+  if(!db)return;
+  unsubMeta=db.doc('calls/'+id).onSnapshot(onMeta,subErr);
+  unsubItems=db.collection('calls/'+id+'/items').onSnapshot(onItems,subErr);
+}
+function changeCall(b,a){
+  const id=makeId(b,a);if(id===callId&&b===biz)return;
+  switchCall(id,b,a);
+  if(mode==='lead'&&db)chain('app/current',()=>db.doc('app/current').set({callId:id,biz:b,agency:a})).catch(writeErr);
+}
+function onCurrent(snap){
+  if(snap.exists){
+    const d=snap.data()||{};
+    if(d.callId&&d.callId!==callId&&(mode==='follow'||!callId))switchCall(d.callId,d.biz==='kc'?'kc':'mv',d.agency||'');
+  }else if(!callId){switchCall(makeId(biz,agency),biz,agency)}
+}
+
+/* ---------- HEADER ---------- */
+function renderHeader(){
+  document.querySelectorAll('#bizSeg button').forEach(b=>b.classList.toggle('on',b.dataset.biz===biz));
+  const ag=$('#agency');if(document.activeElement!==ag)ag.value=agency;
+  $('#agencyList').innerHTML=callsList.filter(c=>c.biz===biz&&c.agency).map(c=>`<option value="${esc(c.agency)}">`).join('');
+  const cp=$('#consentPill');cp.className='pill '+(S.consent?'ok':'rec');cp.textContent=S.consent?'● Recording consent given':'● Consent not confirmed';
+  const L={ok:['ok','● Live – shared'],connecting:['','Connecting…'],slow:['rec','Can’t reach shared data yet'],error:['rec','Sync error – changes may not be shared'],local:['','Local only – not shared'],readonly:['rec','View only – you can’t edit']}[live]||['',''];
+  const lp=$('#livePill');lp.className='pill '+L[0];lp.textContent=L[1];
+  $('#modeBtn').textContent=mode==='lead'?'You are leading (tap to follow)':'Following the lead (tap to lead)';
+  $('#timerTxt').textContent=clock(S.secs);$('#timerBtn').textContent=running?'Pause':'Start';
+}
+/* ---------- NEXT UP ENGINE ---------- */
+function nextUp(){
+  if(!S.consent)return{kind:'consent',cls:'alert',tag:'Before you start',html:'<b>Get the recording consent on the recording.</b> Then tick “Consent given” in the Start card.',go:'START'};
+  const last=S.last&&byId(S.last);
+  if(last){const s=it(last.id);
+    if(s.r==='unclear'&&!s.fu)return{kind:'rephrase',cls:'warn',tag:'Rephrase '+last.id,html:'<b>Say it more simply:</b> “'+esc(last.simple||GENERIC_SIMPLE)+'”',go:last.id};
+    if((s.r==='poor'||s.r==='dodged')&&!s.fu&&last.probe)return{kind:'press',cls:'warn',tag:'Press on '+last.id,html:'<b>Follow up:</b> “'+esc(last.probe)+'”',go:last.id};}
+  for(const b of bls()){const tr=TRIG[b.id];if(!tr)continue;const st=stat(b.id);
+    if(st.total&&st.rated===st.total&&st.n>=2&&st.avg<1.7){for(const qid of tr){const q=byId(qid);if(q&&!it(qid).r)return{kind:'contrast',cls:'warn',tag:'Weak block '+b.id+' – test them',html:'<b>Ask (casually):</b> “'+esc(q.q)+'”',go:qid};}}}
+  if(!S.startDone)return{kind:'start',cls:'',tag:'Next up',html:'<b>Open the call with the Start script.</b>',go:'START'};
+  const order=bls().map(b=>b.id);
+  const cur=order.includes(S.block)?S.block:order[0];
+  const idx=order.indexOf(cur);
+  for(let i=0;i<order.length;i++){const bid=order[(idx+i)%order.length];if(bid==='K'&&i>0&&!allBeforeK())continue;
+    const q=qs().find(x=>x.b===bid&&!it(x.id).r);if(q)return{kind:'next',cls:'',tag:'Next up · '+bid+' '+R(bls().find(b=>b.id===bid).name),html:'<b>Ask:</b> “'+esc(R(q.q))+'”',go:q.id};}
+  if(!S.endDone)return{kind:'end',cls:'',tag:'Wrap up',html:'<b>Read the closing recap and ask them to confirm by email.</b>',go:'END'};
+  return{kind:'done',cls:'',tag:'Finished',html:'<b>All done.</b> Copy or download the summary and log the call.',go:null};
+}
+function allBeforeK(){return qs().filter(x=>!['K','L'].includes(x.b)).every(x=>it(x.id).r)}
+
+/* ---------- RENDER ---------- */
+function renderFlow(){
+  const nodes=[{id:'START',l:'Start',n:'Script',st:S.startDone?'good':''}];
+  bls().forEach(b=>{const st=stat(b.id);nodes.push({id:b.id,l:b.id,n:R(b.name),c:`${st.rated}/${st.total}${st.avg!==null?' · '+fmt(st.avg):''}`,st:st.rated===st.total&&st.total?band(st.avg):(st.avg!==null?band(st.avg):'')})});
+  nodes.push({id:'END',l:'Close',n:'Recap',st:S.endDone?'good':''});
+  $('#flow').innerHTML=nodes.map((n,i)=>`${i?'<span class="arrow"></span>':''}<button class="node ${n.id===S.block?'sel':''} ${n.st?'s-'+n.st:''}" data-node="${n.id}"><div class="l">${esc(n.l)}</div><div class="n">${esc(n.n)}</div>${n.c?`<div class="c">${esc(n.c)}</div>`:''}</button>`).join('');
+}
+function renderNext(){
+  const n=nextUp();const el=$('#next');el.className='next '+(n.cls||'');
+  el.innerHTML=`<div class="txt"><div class="tag">${esc(n.tag)}</div>${n.html}</div>${n.go?`<button class="go" data-go="${esc(n.go)}">Go to card →</button>`:''}`;
+}
+function renderMain(){
+  const m=$('#main');
+  if(S.block==='START'){m.innerHTML=startCard();return}
+  if(S.block==='END'){m.innerHTML=endCard();return}
+  const b=bls().find(x=>x.id===S.block)||bls()[0];
+  const st=stat(b.id);
+  let h=`<div class="blockhead"><h2>${esc(b.id)} · ${esc(R(b.name))}</h2><span class="sub">${esc(R(b.sub))} · ${st.rated}/${st.total} rated</span></div>`;
+  h+=qs().filter(x=>x.b===b.id).map(q=>qcard(q,b)).join('');
+  m.innerHTML=h;
+}
+function qcard(q,b){
+  const s=it(q.id),open=openId===q.id;
+  const chip=s.r?`<span class="chip ${s.r}">${esc(RATE[s.r].l)}</span>`:'';
+  let h=`<article class="qcard ${s.r?'r-'+s.r:''}" id="c-${q.id}"><button class="qhead" data-open="${q.id}"><span class="qid">${q.id}</span><span class="qtext">${esc(R(q.q))}</span>${s.flag?'<span class="chip poor">⚑</span>':''}${s.ev===1?'<span class="chip fair">Evidence promised</span>':''}${s.ev===2?'<span class="chip good">Evidence in</span>':''}${chip}</button>`;
+  if(open){
+    h+=`<div class="qbody"><div class="hint"><div class="box want"><b>${esc(b.good||'What we want')}</b>${esc(R(q.good))}</div>${q.flag?`<div class="box red"><b>Red flag</b>${esc(R(q.flag))}</div>`:''}</div>`;
+    h+=`<div class="rates">${['good','fair','poor','dodged','unclear','covered'].map(k=>`<button class="rate ${k} ${s.r===k?'on':''}" data-rate="${k}" data-id="${q.id}">${esc(RATE[k].l)}<small>${esc(RATE[k].sub)}</small></button>`).join('')}</div>`;
+    if(s.r==='unclear')h+=`<div class="box rephrase"><b>Rephrase</b>“${esc(q.simple||GENERIC_SIMPLE)}”</div>`;
+    if((s.r==='poor'||s.r==='dodged')&&q.probe)h+=`<div class="box press"><b>Press with</b>“${esc(q.probe)}”</div>`;
+    if(['poor','dodged','unclear'].includes(s.r))h+=`<div><button class="btn small" data-fu="${q.id}">${s.fu?'✓ Follow-up done':'Mark follow-up done'}</button></div>`;
+    h+=`<div class="tools"><button class="btn small ${s.ev?'ev'+s.ev:''}" data-ev="${q.id}">${['Evidence: not requested','Evidence promised','Evidence received'][s.ev||0]}</button><button class="btn small ${s.flag?'on':''}" data-flag="${q.id}">${s.flag?'⚑ Red flag noted':'⚑ Note a red flag'}</button><button class="btn small" data-cov="${q.id}">They also answered other questions…</button><button class="btn small" data-skip="${q.id}">Skip</button></div>`;
+    h+=`<textarea data-note="${q.id}" placeholder="Notes, figures they quoted, names…">${esc(s.note)}</textarea></div>`;
+  }else if(s.note){h+=`<div style="padding:0 14px 12px;color:var(--muted);font-size:14px">${esc(s.note.slice(0,140))}${s.note.length>140?'…':''}</div>`}
+  return h+'</article>';
+}
+function startCard(){
+  const what=biz==='mv'?'running lead generation for a removals business in London and the UK':'preparing to run lead generation on Meta for a cleaning business';
+  return `<div class="script"><div class="blockhead"><h2>Start of the call</h2></div>
+  <p><b>1. Recording consent</b> – say this with the recording already running:</p>
+  <blockquote>“Before we start, we record our calls for internal notes and we transcribe them with software. Are you OK with that?”</blockquote>
+  <label class="chk"><input type="checkbox" id="consentChk" ${S.consent?'checked':''}> They said yes, on the recording</label>
+  <p style="color:var(--muted);font-size:14px;margin-top:0">If they say no, don’t record – take written notes instead.</p>
+  <p><b>2. Opening</b></p>
+  <blockquote>“Thanks for your time. We’re ${what}, and we’d like to see whether an agency adds something we can’t get on our own. We’re not buying today and we won’t be sharing account access. I’ll ask some specific questions, and I may follow up by email asking for examples or screenshots.”</blockquote>
+  <p><b>3. Never reveal</b></p><div class="donts">${DONTS.map(d=>`<span>${esc(d)}</span>`).join('')}</div>
+  <p style="color:var(--muted);font-size:14px">If asked: “We’re still exploring options and defining the budget.”</p>
+  <label class="chk"><input type="checkbox" id="startChk" ${S.startDone?'checked':''}> Opening done</label></div>`;
+}
+function endCard(){
+  const ch=chase();
+  return `<div class="script"><div class="blockhead"><h2>Close of the call</h2></div>
+  <p>Read out your three to five key points, then:</p>
+  <blockquote>“Just to recap what we heard: [read the claims]. Could you confirm those by email, with the examples you mentioned? We’ll come back to you after we’ve reviewed everything.”</blockquote>
+  <p><b>Ask them to email:</b></p>
+  ${ch.length?`<ul>${ch.map(c=>`<li><b>${c.id}</b> – ${esc(R(c.q))} <i>(${c.tag})</i></li>`).join('')}</ul>`:'<p class="empty">Nothing outstanding yet.</p>'}
+  <p style="color:var(--muted);font-size:14px">Also say: “We’re not committing to a trial or sharing account access at this stage.”</p>
+  <label class="chk"><input type="checkbox" id="endChk" ${S.endDone?'checked':''}> Recap read out</label></div>`;
+}
+function chase(){const out=[];qs().forEach(q=>{const s=it(q.id);if(s.ev===1)out.push({id:q.id,q:q.q,tag:'promised'});else if(q.ev&&s.r&&['good','fair','poor'].includes(s.r)&&!s.ev)out.push({id:q.id,q:q.q,tag:'ask them to send'})});return out}
+function verdict(){
+  const o=overall();
+  if(o.n<8)return{c:'na',t:`Keep going – I need at least 8 scored answers for a verdict (${o.n} so far).`};
+  if(o.avg<1.5)return{c:'poor',t:'Probably nothing for us. Keep it polite and short; don’t invest more time.'};
+  if(o.avg<2.2)return{c:'fair',t:'Take only the ideas we can verify. Chase the evidence by email, then decide.'};
+  return{c:'good',t:'Worth a deeper follow-up (still no payment and no account access).'};
+}
+function renderSum(){
+  const o=overall(),v=verdict();
+  const counts={};qs().forEach(q=>{const r=it(q.id).r;if(r)counts[r]=(counts[r]||0)+1});
+  const flags=qs().filter(q=>it(q.id).flag),ch=chase();
+  const fus=qs().filter(q=>['poor','dodged','unclear'].includes(it(q.id).r)&&!it(q.id).fu);
+  $('#sum').innerHTML=`<h3>Live summary</h3><div class="verdict v-${v.c}">${esc(v.t)}</div>
+  <div class="score">${fmt(o.avg)}<small> / 3 average · ${o.n} scored</small></div>
+  <div class="counts">${Object.keys(counts).map(k=>`<span class="chip ${k}">${esc(RATE[k].l)} ${counts[k]}</span>`).join('')||'<span class="empty">No answers rated yet.</span>'}</div>
+  <h3>Red flags (${flags.length})</h3>${flags.length?`<ul>${flags.map(q=>`<li><b>${q.id}</b> ${esc(R(q.flag)||'')}</li>`).join('')}</ul>`:'<p class="empty">None noted.</p>'}
+  <h3>Evidence to chase (${ch.length})</h3>${ch.length?`<ul>${ch.map(c=>`<li><b>${c.id}</b> – ${c.tag}</li>`).join('')}</ul>`:'<p class="empty">Nothing outstanding.</p>'}
+  <h3>Follow-ups not done (${fus.length})</h3>${fus.length?`<ul>${fus.map(q=>`<li><b>${q.id}</b> ${esc(RATE[it(q.id).r].l)}</li>`).join('')}</ul>`:'<p class="empty">All clear.</p>'}`;
+}
+function renderAll(){renderHeader();renderFlow();renderNext();renderMain();renderSum()}
+function refreshSide(){renderHeader();renderFlow();renderNext();renderSum()}
+
+
+/* ---------- ACTIONS ---------- */
+function goTo(id){
+  if(id==='START'||id==='END'){S.block=id;setMeta({block:id,open:null});renderAll();window.scrollTo({top:0,behavior:'smooth'});return}
+  const q=byId(id);if(!q)return;
+  S.block=q.b;setMeta({block:q.b,open:id});renderAll();
+  const el=document.getElementById('c-'+id);if(el){el.scrollIntoView({block:'center',behavior:'smooth'});el.classList.add('pulse')}
+}
+function rate(id,r){const nr=it(id).r===r?null:r;set(id,{r:nr,fu:false});if(nr)setMeta({last:id});renderAll()}
+function resetCall(){
+  const ids=Object.keys(S.items);
+  S.items={};S.consent=false;S.startDone=false;S.endDone=false;S.last=null;S.block='START';openId=null;
+  if(db&&callId){
+    ids.forEach(id=>{const path=P()+'/items/'+id;chain(path,()=>db.doc(path).delete()).catch(writeErr)});
+    const path=P();chain(path,()=>metaExists?db.doc(path).update({consent:false,startDone:false,endDone:false,last:null,block:'START',open:null}):Promise.resolve()).catch(writeErr);
+  }
+  renderAll();
+}
+document.addEventListener('click',e=>{
+  const t=e.target.closest('button,input');if(!t)return;
+  if(t.dataset.biz){changeCall(t.dataset.biz,'');return}
+  if(t.dataset.node){S.block=t.dataset.node;setMeta({block:t.dataset.node,open:null});renderAll();return}
+  if(t.dataset.go){goTo(t.dataset.go);return}
+  if(t.dataset.open){const x=openId===t.dataset.open?null:t.dataset.open;setMeta({open:x});renderMain();if(openId)document.getElementById('c-'+openId).scrollIntoView({block:'nearest'});return}
+  if(t.dataset.rate){rate(t.dataset.id,t.dataset.rate);return}
+  if(t.dataset.fu){set(t.dataset.fu,{fu:!it(t.dataset.fu).fu});renderAll();return}
+  if(t.dataset.ev){set(t.dataset.ev,{ev:((it(t.dataset.ev).ev||0)+1)%3});renderAll();return}
+  if(t.dataset.flag){set(t.dataset.flag,{flag:!it(t.dataset.flag).flag});renderAll();return}
+  if(t.dataset.skip){set(t.dataset.skip,{r:'skip'});setMeta({last:null});renderAll();return}
+  if(t.dataset.cov){openCovered(t.dataset.cov);return}
+  if(t.id==='consentChk'){setMeta({consent:t.checked});refreshSide();return}
+  if(t.id==='startChk'){setMeta({startDone:t.checked});refreshSide();return}
+  if(t.id==='endChk'){setMeta({endDone:t.checked});refreshSide();return}
+  if(t.id==='timerBtn'){toggleTimer();return}
+  if(t.id==='copyBtn'){copyText(summaryText());return}
+  if(t.id==='modeBtn'){
+    mode=mode==='lead'?'follow':'lead';renderHeader();
+    if(mode==='follow'&&db&&callId)db.doc(P()).get().then(s=>{if(s.exists&&mode==='follow'){const m=s.data();S.block=m.block||'START';openId=m.open||null;renderAll()}}).catch(()=>{});
+    return;
+  }
+  if(t.id==='resetBtn'){
+    if(!resetArm){resetArm=true;t.textContent='Click again to confirm';setTimeout(()=>{resetArm=false;t.textContent='Reset this call'},4000);return}
+    resetArm=false;t.textContent='Reset this call';resetCall();return;
+  }
+});
+document.addEventListener('input',e=>{
+  if(e.target.dataset&&e.target.dataset.note){set(e.target.dataset.note,{note:e.target.value},600)}
+});
+$('#agency').addEventListener('change',e=>changeCall(biz,e.target.value.trim()));
+function toggleTimer(){running=!running;if(running){tick=setInterval(()=>{S.secs++;$('#timerTxt').textContent=clock(S.secs)},1000)}else{clearInterval(tick)}$('#timerBtn').textContent=running?'Pause':'Start'}
+
+/* covered modal */
+function openCovered(fromId){
+  const groups=bls().map(b=>({b,list:qs().filter(q=>q.b===b.id&&!it(q.id).r&&q.id!==fromId)})).filter(g=>g.list.length);
+  $('#covIn').innerHTML=`<h3>Which other questions did they just answer?</h3><p style="color:var(--muted);margin:0 0 6px">Ticked ones will be marked “Covered earlier” and skipped. You can add the figures in their notes.</p>
+  ${groups.map(g=>`<div class="cov-group">${g.b.id} · ${esc(R(g.b.name))}</div>${g.list.map(q=>`<label class="cov-item"><input type="checkbox" value="${q.id}"><span><b>${q.id}</b> ${esc(R(q.q))}</span></label>`).join('')}`).join('')||'<p>Nothing left to mark.</p>'}
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px"><button class="btn" id="covCancel">Cancel</button><button class="btn primary" id="covApply">Mark as covered</button></div>`;
+  $('#covModal').classList.add('on');
+  $('#covCancel').onclick=()=>$('#covModal').classList.remove('on');
+  $('#covApply').onclick=()=>{document.querySelectorAll('#covIn input:checked').forEach(c=>{const id=c.value;set(id,{r:'covered',note:(it(id).note?it(id).note+'\n':'')+'Covered while answering '+fromId})});$('#covModal').classList.remove('on');renderAll()};
+}
+$('#covModal').addEventListener('click',e=>{if(e.target.id==='covModal')$('#covModal').classList.remove('on')});
+
+/* export */
+function summaryText(){
+  const o=overall(),v=verdict(),d=new Date().toLocaleString('en-GB');
+  const L=[];
+  L.push(`AGENCY CALL SUMMARY – ${biz==='mv'?'Mooveto':'Keen Clean'}`);
+  L.push(`Agency: ${agency||'(not named)'}   Date: ${d}   Duration: ${clock(S.secs)}   Consent to record: ${S.consent?'yes':'NOT confirmed'}`);
+  L.push(`Verdict: ${v.t}`);
+  L.push(`Average score: ${fmt(o.avg)} / 3 over ${o.n} scored answers. Red flags: ${o.flags}. Covered earlier: ${o.covered}.`);
+  L.push('');L.push('BY BLOCK');
+  bls().forEach(b=>{const st=stat(b.id);L.push(`${b.id} ${R(b.name)}: ${fmt(st.avg)} (${st.rated}/${st.total} rated)`)});
+  const ch=chase();L.push('');L.push('EVIDENCE TO CHASE BY EMAIL');ch.length?ch.forEach(c=>L.push(`- ${c.id} ${R(c.q)} [${c.tag}]`)):L.push('- none');
+  const fus=qs().filter(q=>['poor','dodged','unclear'].includes(it(q.id).r)&&!it(q.id).fu);
+  L.push('');L.push('FOLLOW-UPS STILL OPEN');fus.length?fus.forEach(q=>L.push(`- ${q.id} (${RATE[it(q.id).r].l}) ${q.probe||''}`)):L.push('- none');
+  L.push('');L.push('DETAIL');
+  qs().forEach(q=>{const s=it(q.id);if(!s.r&&!s.note)return;L.push(`[${q.id}] ${RATE[s.r||'skip'].l}${s.flag?' | RED FLAG':''}${s.ev?` | evidence ${s.ev===1?'promised':'received'}`:''}`);L.push(`   Q: ${R(q.q)}`);if(s.note)L.push(`   Notes: ${s.note.replace(/\n/g,' / ')}`)});
+  return L.join('\n');
+}
+function openText(t){
+  $('#covIn').innerHTML=`<h3>Call summary</h3><p style="color:var(--muted);margin:0 0 6px">Select all and copy (Ctrl/Cmd + C).</p><textarea readonly style="min-height:320px">${esc(t)}</textarea><div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="btn primary" id="covCancel">Close</button></div>`;
+  $('#covModal').classList.add('on');$('#covCancel').onclick=()=>$('#covModal').classList.remove('on');
+  setTimeout(()=>{const a=$('#covIn textarea');if(a){a.focus();a.select()}},50);
+}
+function copyText(t){
+  const done=()=>{const b=$('#copyBtn');const o=b.textContent;b.textContent='Copied ✓';setTimeout(()=>b.textContent=o,1500)};
+  try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(done,()=>openText(t))}else openText(t)}catch(e){openText(t)}
+}
+
+/* ---------- SELF-HOSTED BACKEND (n8n) ---------- */
+const ENDPOINT='https://n8n.alchimedia.co.uk/webhook/panel-ghrQg6o_tL5C';
+function getKey(){try{return localStorage.getItem('cp.key')}catch(e){return null}}
+function saveKey(k){try{localStorage.setItem('cp.key',k)}catch(e){}}
+function dropKey(){try{localStorage.removeItem('cp.key')}catch(e){}}
+function parseHash(){const o={};location.hash.replace(/^#/,'').split('&').forEach(p=>{if(!p)return;const i=p.indexOf('=');const k=i<0?p:p.slice(0,i);o[k]=i<0?true:decodeURIComponent(p.slice(i+1))});return o}
+async function post(key,body){
+  const r=await fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},body:JSON.stringify(Object.assign({key},body))});
+  return r.json();
+}
+function makeRemoteDb(key,status){
+  let docs={},v=-1,subs=[],ready=false,pending=0,failing=0,stopped=false;
+  const parentOf=p=>p.split('/').slice(0,-1).join('/');
+  const clone=o=>JSON.parse(JSON.stringify(o));
+  const meta={fromCache:false,hasPendingWrites:false};
+  const snapDoc=p=>({id:p.split('/').pop(),exists:p in docs,data:()=>p in docs?clone(docs[p]):undefined,metadata:meta});
+  const snapCol=c=>{const l=Object.keys(docs).filter(k=>parentOf(k)===c).sort().map(snapDoc);return{docs:l,size:l.length,empty:!l.length,metadata:meta,docChanges:()=>[]}};
+  const fireAll=()=>setTimeout(()=>subs.slice().forEach(s=>s.fire()),0);
+  async function call(body){const j=await post(key,body);if(!j.ok){const e=new Error(j.error||'error');e.code=j.error==='forbidden'?'revoked':'unavailable';throw e}return j}
+  async function pull(){
+    const j=await call({op:'sync',since:v});
+    if(j.same||pending>0)return;
+    docs=j.docs||{};v=j.v;ready=true;fireAll();
+  }
+  async function loop(){
+    if(stopped)return;
+    try{await pull();if(!ready){ready=true;fireAll()}failing=0;status('ok')}
+    catch(e){if(e.code==='revoked'){stopped=true;status('forbidden');return}failing++;status('error')}
+    setTimeout(loop,document.hidden?8000:(failing?5000:2500));
+  }
+  async function write(w){pending++;try{const j=await call({op:'write',writes:[w]});if(j.errors&&j.errors.length){const e=new Error('invalid');e.code='invalid_argument';throw e}}finally{pending--}}
+  function addSub(fire,next){const s={fire};subs.push(s);if(ready)setTimeout(fire,0);return()=>{const i=subs.indexOf(s);if(i>=0)subs.splice(i,1)}}
+  function doc(path){return{id:path.split('/').pop(),path,
+    get:async()=>snapDoc(path),
+    set:async d=>{docs[path]=clone(d);fireAll();await write({t:'set',path,data:d})},
+    update:async d=>{if(!(path in docs)){const e=new Error('missing');e.code='invalid_argument';throw e}Object.assign(docs[path],clone(d));fireAll();await write({t:'update',path,data:d})},
+    delete:async()=>{delete docs[path];fireAll();await write({t:'delete',path})},
+    onSnapshot(next){return addSub(()=>next(snapDoc(path)))},
+    collection:c=>col(path+'/'+c)}}
+  function col(path){return{path,doc:id=>doc(path+'/'+id),onSnapshot(next){return addSub(()=>next(snapCol(path)))}}}
+  loop();
+  return{doc,collection:col};
+}
+function askKey(msg){
+  $('#keyErr').textContent=msg||'';
+  $('#keyModal').classList.add('on');
+  setTimeout(()=>$('#keyInput').focus(),50);
+}
+async function boot(){
+  const h=parseHash();
+  if(h.k)saveKey(h.k);
+  if(h.follow)mode='follow';
+  if(h.k||h.follow)history.replaceState(null,'',location.pathname+location.search+(h.follow?'#follow':''));
+  const key=getKey();
+  if(!key){askKey();return}
+  let j;
+  try{j=await post(key,{op:'data'})}catch(e){askKey('Can’t reach the server. Check your connection and try again.');return}
+  if(!j.ok){if(j.error==='forbidden'){dropKey();askKey('That key is not valid.')}else askKey('Server error. Try again in a moment.');return}
+  const D=new Function(j.src)();
+  B=D.B;Q=D.Q;TRIG=D.TRIG;RATE=D.RATE;SCORED=D.SCORED;GENERIC_SIMPLE=D.GENERIC_SIMPLE;DONTS=D.DONTS;
+  $('#keyModal').classList.remove('on');
+  db=makeRemoteDb(key,s=>{
+    if(s==='forbidden'){dropKey();askKey('The access key is no longer valid.');return}
+    if(s==='ok'&&live!=='ok'&&live!=='readonly'){live='ok';renderHeader()}
+    else if(s==='error'&&live!=='error'){live='error';renderHeader()}
+  });
+  renderAll();
+  const timeout=setTimeout(()=>{if(live==='connecting'){live='slow';renderHeader()}},10000);
+  db.collection('calls').onSnapshot(sn=>{clearTimeout(timeout);callsList=sn.docs.map(d=>Object.assign({id:d.id},d.data()));renderHeader()},subErr);
+  db.doc('app/current').onSnapshot(onCurrent,subErr);
+}
+$('#keyBtn').addEventListener('click',()=>{const k=$('#keyInput').value.trim();if(!k)return;saveKey(k);$('#keyModal').classList.remove('on');boot()});
+$('#keyInput').addEventListener('keydown',e=>{if(e.key==='Enter')$('#keyBtn').click()});
+boot();
+</script>
+</body>
+</html>
