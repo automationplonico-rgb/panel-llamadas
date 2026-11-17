@@ -237,7 +237,7 @@ function onMeta(snap){
 function onItems(snap){
   let changed=false;const seen={};
   snap.docs.forEach(d=>{
-    const v=d.data()||{};seen[d.id]=1;
+    const v=d.data()||{};seen[d.id]=1;if(noteTimers[d.id])return;
     const nv={r:v.r||null,note:v.note||'',ev:v.ev||0,flag:!!v.flag,fu:!!v.fu},cur=S.items[d.id];
     if(JSON.stringify(cur)!==JSON.stringify(nv)){
       const a=document.activeElement;
